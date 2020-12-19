@@ -31,6 +31,11 @@ namespace WPFSkeletonIDE.Views
         /// </summary>
         public override DataTemplate SelectTemplate(object item, System.Windows.DependencyObject container)
         {
+            if (item == null)
+            {
+                return base.SelectTemplate(item, container);
+            }
+
             // item には ViewModel が入っている。
             // ViewModel の型に対応するテンプレートを返す。
             var template = Items.Find((dt) => item.GetType().Equals(dt.DataType));

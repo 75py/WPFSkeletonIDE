@@ -40,6 +40,10 @@
         <!--Windowが閉じたタイミングでViewModelのDisposeメソッドが呼ばれます-->
         <i:EventTrigger EventName="Closed">
             <l:DataContextDisposeAction/>
+            <l:LivetCallMethodAction MethodTarget="{Binding}" MethodName="SaveLayout" MethodParameter="{Binding ElementName=_dockingManager}"/>
+        </i:EventTrigger>
+        <i:EventTrigger EventName="Loaded">
+            <l:LivetCallMethodAction MethodTarget="{Binding}" MethodName="LoadLayout" MethodParameter="{Binding ElementName=_dockingManager}"/>
         </i:EventTrigger>
 
         <!--WindowのCloseキャンセル処理に対応する場合は、WindowCloseCancelBehaviorの使用を検討してください-->
@@ -79,12 +83,14 @@
                     <v:LayoutItemTypedStyle DataType="{x:Type vmDocuments:DocumentViewModelBase}">
                         <Style TargetType="{x:Type avalonDock:LayoutItem}">
                             <Setter Property="Title" Value="{Binding Model.Title}" />
+                            <Setter Property="ContentId" Value="{Binding Model.ContentId}" />
                         </Style>
                     </v:LayoutItemTypedStyle>
                     <!-- Pane のスタイル -->
                     <v:LayoutItemTypedStyle DataType="{x:Type vmPanes:PaneViewModelBase}">
                         <Style TargetType="{x:Type avalonDock:LayoutAnchorableItem}">
                             <Setter Property="Title" Value="{Binding Model.Title}"/>
+                            <Setter Property="ContentId" Value="{Binding Model.ContentId}" />
                         </Style>
                     </v:LayoutItemTypedStyle>
                 </v:LayoutItemContainerStyleSelector>

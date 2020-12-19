@@ -34,6 +34,11 @@ namespace WPFSkeletonIDE.Views
         /// <returns></returns>
         public override Style SelectStyle(object item, System.Windows.DependencyObject container)
         {
+            if (item == null)
+            {
+                return base.SelectStyle(item, container);
+            }
+
             // item には ViewModel が入っている。
             // ViewModel の型に対応するテンプレートを返す。
             var styleData = Items.Find((s) => item.GetType().IsSubclassOf(s.DataType));

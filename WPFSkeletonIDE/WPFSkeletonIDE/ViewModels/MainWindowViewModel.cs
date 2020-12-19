@@ -13,6 +13,13 @@ using Livet.EventListeners;
 using Livet.Messaging.Windows;
 
 using WPFSkeletonIDE.Models;
+using System.IO;
+using Xceed.Wpf.AvalonDock;
+using Xceed.Wpf.AvalonDock.Layout.Serialization;
+using System.Xml;
+using Xceed.Wpf.AvalonDock.Layout;
+using WPFSkeletonIDE.ViewModels.Panes;
+using System.Reflection;
 
 namespace WPFSkeletonIDE.ViewModels
 {
@@ -75,6 +82,109 @@ namespace WPFSkeletonIDE.ViewModels
         /// </summary>
         public void Initialize()
         {
+        }
+
+        String LayoutFile
+        {
+            get
+            {
+                return System.IO.Path.ChangeExtension(
+                    Environment.GetCommandLineArgs()[0]
+                    , ".AvalonDock.config"
+                    );
+            }
+        }
+
+        public void LoadLayout(DockingManager dockManager)
+        {
+            // backup default layout
+            using (var ms = new MemoryStream())
+            {
+                var serializer = new XmlLayoutSerializer(dockManager);
+                serializer.Serialize(ms);
+            }
+
+            // load file
+            Byte[] bytes;
+            try
+            {
+                bytes = System.IO.File.ReadAllBytes(LayoutFile);
+            }
+            catch (FileNotFoundException ex)
+            {
+                return;
+            }
+
+            // restore layout
+            LoadLayoutFromBytes(dockManager, bytes);
+        }
+
+        bool LoadLayoutFromBytes(DockingManager dockManager, Byte[] bytes)
+        {
+            var serializer = new XmlLayoutSerializer(dockManager);
+
+            serializer.LayoutSerializationCallback += MatchLayoutContent;
+
+            try
+            {
+                using (var stream = new MemoryStream(bytes))
+                {
+                    serializer.Deserialize(stream);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        void MatchLayoutContent(object o, LayoutSerializationCallbackEventArgs e)
+        {
+            var contentId = e.Model.ContentId;
+
+            if (e.Model is LayoutAnchorable)
+            {
+                foreach (var viewModel in DockingPaneViewModels)
+                {
+                    var propInfo = viewModel.GetType().GetProperty("ContentId", BindingFlags.Public | BindingFlags.Instance);
+                    var vmContentId = (string)propInfo.GetValue(viewModel);
+                    if (contentId == vmContentId)
+                    {
+                        e.Model.Content = viewModel;
+                    }
+                }
+            }
+
+            if (e.Model is LayoutDocument)
+            {
+                foreach (var viewModel in DockingDocumentViewModels)
+                {
+                    var propInfo = viewModel.GetType().GetProperty("ContentId", BindingFlags.Public | BindingFlags.Instance);
+                    var vmContentId = (string)propInfo.GetValue(viewModel);
+                    if (contentId == vmContentId)
+                    {
+                        e.Model.Content = viewModel;
+                    }
+                }
+            }
+        }
+
+        public void SaveLayout(DockingManager dockManager)
+        {
+            var serializer = new XmlLayoutSerializer(dockManager);
+            var doc = new XmlDocument();
+            using (var stream = new MemoryStream())
+            {
+                serializer.Serialize(stream);
+                stream.Position = 0;
+                doc.Load(stream);
+            }
+            using (var stream = new FileStream(LayoutFile, FileMode.Create))
+            {
+                doc.Save(stream);
+            }
         }
     }
 }
